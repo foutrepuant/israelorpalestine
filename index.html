@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Vote Palestine vs Israël</title>
+<style>
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-family: sans-serif;
+    background: url('noir.png') center/cover no-repeat;
+    transition: background 0.5s;
+    color: white;
+  }
+
+  /* Conteneur des boutons */
+  .buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  button {
+    position: relative;
+    margin: 10px;
+    padding: 20px 50px;
+    font-size: 24px;
+    cursor: pointer;
+    border: none;
+    border-radius: 12px;
+    font-weight: bold;
+    color: white;
+    transition: all 0.3s ease;
+    overflow: hidden;
+  }
+
+  /* Couleurs spécifiques */
+  #palestine { background-color: #007A3D; }
+  #israel { background-color: #0038B8; }
+
+  /* Hover : léger zoom et ombre */
+  button:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+  }
+
+  /* Ripple effect */
+  .ripple {
+    position: absolute;
+    border-radius: 50%;
+    transform: scale(0);
+    animation: ripple 0.6s linear;
+    background-color: rgba(255,255,255,0.7);
+  }
+
+  @keyframes ripple {
+    to {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
+
+  #counters {
+    margin-top: 20px;
+    font-size: 20px;
+    text-align: center;
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    button {
+      font-size: 20px;
+      padding: 15px 30px;
+    }
+    #counters { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+  <audio id="music" src="musique.mp3" autoplay loop></audio>
+
+  <div class="buttons">
+    <button id="palestine">Palestine</button>
+    <button id="israel">Israël</button>
+  </div>
+
+  <div id="counters">
+    Palestine: <span id="countPal">0</span> | Israël: <span id="countIsr">0</span>
+  </div>
+
+<script>
+async function vote(side) {
+  const response = await fetch(`/vote?side=${side}`);
+  const data = await response.json();
+
+  document.getElementById('countPal').textContent = data.palestine;
+  document.getElementById('countIsr').textContent = data.israel;
+
+  if(data.palestine > data.israel) {
+    document.body.style.background = "url('palestine.png') center/cover no-repeat";
+  } else if(data.israel > data.palestine) {
+    document.body.style.background = "url('israel.png') center/cover no-repeat";
+  } else {
+    document.body.style.background = "url('noir.png') center/cover no-repeat";
+  }
+}
+
+// Ajouter ripple effect au clic
+function addRipple(e) {
+  const circle = document.createElement("span");
+  circle.classList.add("ripple");
+  this.appendChild(circle);
+  const d = Math.max(this.clientWidth, this.clientHeight);
+  circle.style.width = circle.style.height = d + "px";
+  const rect = this.getBoundingClientRect();
+  circle.style.left = e.clientX - rect.left - d/2 + "px";
+  circle.style.top = e.clientY - rect.top - d/2 + "px";
+  circle.addEventListener('animationend', () => circle.remove());
+}
+
+document.getElementById('palestine').onclick = function(e) { addRipple.call(this,e); vote('palestine'); };
+document.getElementById('israel').onclick = function(e) { addRipple.call(this,e); vote('israel'); };
+
+// Rafraîchissement automatique du compteur toutes les 2 secondes
+setInterval(async () => {
+  const res = await fetch('/votes');
+  const data = await res.json();
+  document.getElementById('countPal').textContent = data.palestine;
+  document.getElementById('countIsr').textContent = data.israel;
+}, 2000);
+</script>
+</body>
+</html>
